@@ -22,7 +22,6 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponseException;
 import com.google.appengine.api.urlfetch.HTTPHeader;
 import com.google.appengine.api.urlfetch.HTTPRequest;
-import com.google.appengine.api.urlfetch.HTTPResponse;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
@@ -138,7 +137,7 @@ final class URLFetchUtils {
     b.append('\n').append(exception.getContent()).append('\n');
   }
 
-  static void appendResponse(HTTPResponse resp, StringBuilder b) {
+  static void appendResponse(URLFetchService.HTTPResponse resp, StringBuilder b) {
     byte[] content = resp.getContent();
     b.append(resp.getResponseCode()).append(" with ").append(content == null ? 0 : content.length);
     b.append(" bytes of content");
@@ -156,7 +155,7 @@ final class URLFetchUtils {
     return b.toString();
   }
 
-  static String describeRequestAndResponse(HTTPRequestInfo req, HTTPResponse resp) {
+  static String describeRequestAndResponse(HTTPRequestInfo req, URLFetchService.HTTPResponse resp) {
     StringBuilder b = new StringBuilder(256).append("Request: ");
     req.appendToString(b);
     b.append("\nResponse: ");
@@ -165,7 +164,7 @@ final class URLFetchUtils {
   }
 
   /** Gets all headers with the name {@code headerName}, case-insensitive. */
-  private static Iterable<HTTPHeader> getHeaders(HTTPResponse resp, String headerName) {
+  private static Iterable<HTTPHeader> getHeaders(URLFetchService.HTTPResponse resp, String headerName) {
     final String lowercaseHeaderName = headerName.toLowerCase();
     return Iterables.filter(resp.getHeadersUncombined(), new Predicate<HTTPHeader>() {
       @Override public boolean apply(HTTPHeader header) {
@@ -177,7 +176,7 @@ final class URLFetchUtils {
   /**
    * Checks that exactly one header named {@code headerName} is present and returns its value.
    */
-  static String getSingleHeader(HTTPResponse resp, String headerName) {
+  static String getSingleHeader(URLFetchService.HTTPResponse resp, String headerName) {
     return Iterables.getOnlyElement(getHeaders(resp, headerName)).getValue();
   }
 

@@ -16,11 +16,12 @@
 
 package com.google.appengine.tools.cloudstorage.oauth;
 
+import com.google.appengine.api.urlfetch.HTTPHeader;
 import com.google.appengine.api.urlfetch.HTTPRequest;
-import com.google.appengine.api.urlfetch.HTTPResponse;
 import com.google.appengine.tools.cloudstorage.RetryHelperException;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.Future;
 
 /**
@@ -29,7 +30,21 @@ import java.util.concurrent.Future;
  *
  * <p>It is unspecified what happens if OAuth headers are already present.
  */
-interface OAuthURLFetchService {
+interface URLFetchService {
+
+  /**
+   * Temporary hack until com.google.appengine.api.urlfetch.HTTPResponse gets a public constructor
+   */
+  interface HTTPResponse {
+
+    int getResponseCode();
+
+    byte[] getContent();
+
+    List<HTTPHeader> getHeadersUncombined();
+
+    List<HTTPHeader> getHeaders();
+  }
 
   HTTPResponse fetch(HTTPRequest req) throws IOException, RetryHelperException;
 

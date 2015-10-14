@@ -16,7 +16,6 @@ package com.google.appengine.tools.cloudstorage.oauth;
 
 import com.google.appengine.api.appidentity.AppIdentityService;
 import com.google.appengine.api.appidentity.AppIdentityService.GetAccessTokenResult;
-import com.google.appengine.api.urlfetch.URLFetchService;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 
@@ -30,14 +29,14 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 
 /**
- * {@link OAuthURLFetchService} based on {@link AppIdentityService}. This will work in production
+ * {@link URLFetchService} based on {@link AppIdentityService}. This will work in production
  * without any need for credential passing (assuming the service account is given permission to the
  * Google Cloud Storage bucket), but it won't work locally running against real Google Cloud
  * Storage.
  */
-final class AppIdentityOAuthURLFetchService extends AbstractOAuthURLFetchService {
+final class AppIdentityURLFetchService extends AbstractURLFetchService {
   private static final Logger logger =
-      Logger.getLogger(AppIdentityOAuthURLFetchService.class.getCanonicalName());
+      Logger.getLogger(AppIdentityURLFetchService.class.getCanonicalName());
 
   /**
    * A range of time is provided for the refresh so that multiple instance don't all attempt to
@@ -59,7 +58,7 @@ final class AppIdentityOAuthURLFetchService extends AbstractOAuthURLFetchService
    */
   private final AtomicBoolean refreshInProgress = new AtomicBoolean(false);
 
-  AppIdentityOAuthURLFetchService(URLFetchService urlFetch, List<String> oauthScopes) {
+  AppIdentityURLFetchService(URLFetchService urlFetch, List<String> oauthScopes) {
     super(urlFetch);
     this.oauthScopes = ImmutableList.copyOf(oauthScopes);
     this.accessTokenProvider = createAccessTokenProvider();

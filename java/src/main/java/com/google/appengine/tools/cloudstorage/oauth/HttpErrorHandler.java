@@ -13,7 +13,6 @@
  */
 package com.google.appengine.tools.cloudstorage.oauth;
 
-import com.google.appengine.api.urlfetch.HTTPResponse;
 import com.google.appengine.tools.cloudstorage.oauth.URLFetchUtils.HTTPRequestInfo;
 import com.google.common.base.Strings;
 
@@ -57,7 +56,7 @@ class HttpErrorHandler {
     }
   }
 
-  public static IOException error(HTTPRequestInfo req, HTTPResponse resp) throws IOException {
+  public static IOException error(HTTPRequestInfo req, URLFetchService.HTTPResponse resp) throws IOException {
     return error(resp.getResponseCode(), URLFetchUtils.describeRequestAndResponse(req, resp));
   }
 }

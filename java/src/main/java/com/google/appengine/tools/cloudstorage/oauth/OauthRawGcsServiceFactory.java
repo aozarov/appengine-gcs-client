@@ -16,11 +16,18 @@
 
 package com.google.appengine.tools.cloudstorage.oauth;
 
-import static com.google.appengine.api.urlfetch.URLFetchServiceFactory.getURLFetchService;
-
 import com.google.appengine.api.urlfetch.HTTPHeader;
+import com.google.appengine.api.urlfetch.HTTPRequest;
+import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
+import com.google.appengine.repackaged.com.google.common.base.Function;
+import com.google.appengine.repackaged.com.google.common.util.concurrent.Futures;
 import com.google.appengine.tools.cloudstorage.RawGcsService;
+import com.google.appengine.tools.cloudstorage.RetryHelperException;
 import com.google.common.collect.ImmutableSet;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.Future;
 
 
 /**
@@ -28,8 +35,8 @@ import com.google.common.collect.ImmutableSet;
  */
 public final class OauthRawGcsServiceFactory {
 
-  private static final AppIdentityOAuthURLFetchService appIdFetchService =
-      new AppIdentityOAuthURLFetchService(getURLFetchService(), OauthRawGcsService.OAUTH_SCOPES);
+  private static final AppIdentityURLFetchService appIdFetchService =
+      new AppIdentityURLFetchService(getURLFetchService(), OauthRawGcsService.OAUTH_SCOPES);
 
   private OauthRawGcsServiceFactory() {}
 
@@ -39,5 +46,63 @@ public final class OauthRawGcsServiceFactory {
    */
   public static RawGcsService createOauthRawGcsService(ImmutableSet<HTTPHeader> headers) {
     return new OauthRawGcsService(appIdFetchService, headers);
+  }
+
+  public static URLFetchService getURLFetchService() {
+    return new URLFetchAdapter();
+  }
+
+  private static class URLFetchAdapter implements URLFetchService {
+
+    private static com.google.appengine.api.urlfetch.URLFetchService delegate =
+        URLFetchServiceFactory.getURLFetchService();
+
+    @Override
+    public HTTPResponse fetch(HTTPRequest req) throws IOException, RetryHelperException {
+      final com.google.appengine.api.urlfetch.HTTPResponse r = delegate.fetch(req);
+      return new HTTPResponseAdapter(r);
+    }
+
+    @Override
+    public Future<HTTPResponse> fetchAsync(HTTPRequest req) {
+      final Future<com.google.appengine.api.urlfetch.HTTPResponse> r = delegate.fetchAsync(req);
+      return Futures.lazyTransform(r,
+          new Function<com.google.appengine.api.urlfetch.HTTPResponse, HTTPResponse>() {
+
+            @Override
+            public HTTPResponse apply(com.google.appengine.api.urlfetch.HTTPResponse r) {
+              return new HTTPResponseAdapter(r);
+            }
+          });
+    }
+
+    private static class HTTPResponseAdapter implements HTTPResponse {
+
+      private final com.google.appengine.api.urlfetch.HTTPResponse r;
+
+      public HTTPResponseAdapter(com.google.appengine.api.urlfetch.HTTPResponse r) {
+        this.r = r;
+      }
+
+      @Override
+      public int getResponseCode() {
+        return r.getResponseCode();
+      }
+
+      @Override
+      public byte[] getContent() {
+        return r.getContent();
+      }
+
+      @Override
+      public List<HTTPHeader> getHeadersUncombined() {
+        return r.getHeadersUncombined();
+      }
+
+      @Override
+      public List<HTTPHeader> getHeaders() {
+        return r.getHeaders();
+      }
+    }
   }
 }

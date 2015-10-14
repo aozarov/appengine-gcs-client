@@ -32,7 +32,6 @@ import com.google.appengine.api.urlfetch.FetchOptions;
 import com.google.appengine.api.urlfetch.HTTPHeader;
 import com.google.appengine.api.urlfetch.HTTPMethod;
 import com.google.appengine.api.urlfetch.HTTPRequest;
-import com.google.appengine.api.urlfetch.HTTPResponse;
 import com.google.appengine.api.utils.FutureWrapper;
 import com.google.appengine.api.utils.SystemProperty;
 import com.google.appengine.repackaged.com.google.common.escape.Escaper;
@@ -43,6 +42,7 @@ import com.google.appengine.tools.cloudstorage.GcsFileOptions;
 import com.google.appengine.tools.cloudstorage.GcsFilename;
 import com.google.appengine.tools.cloudstorage.ListItem;
 import com.google.appengine.tools.cloudstorage.RawGcsService;
+import com.google.appengine.tools.cloudstorage.oauth.URLFetchService.HTTPResponse;
 import com.google.appengine.tools.cloudstorage.oauth.URLFetchUtils.HTTPRequestInfo;
 import com.google.appengine.tools.cloudstorage.oauth.XmlHandler.EventType;
 import com.google.common.annotations.VisibleForTesting;
@@ -77,7 +77,6 @@ import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.annotation.Nullable;
 import javax.xml.bind.DatatypeConverter;
 import javax.xml.stream.XMLStreamException;
@@ -162,12 +161,12 @@ final class OauthRawGcsService implements RawGcsService {
     }
   }
 
-  private final OAuthURLFetchService urlfetch;
+  private final URLFetchService urlfetch;
   @SuppressWarnings("unused")
   private final Storage storage;
   private final ImmutableSet<HTTPHeader> headers;
 
-  OauthRawGcsService(OAuthURLFetchService urlfetch, ImmutableSet<HTTPHeader> headers) {
+  OauthRawGcsService(URLFetchService urlfetch, ImmutableSet<HTTPHeader> headers) {
     this.urlfetch = checkNotNull(urlfetch, "Null urlfetch");
     this.headers = checkNotNull(headers, "Null headers");
     AppIdentityCredential cred = new AppIdentityCredential(OAUTH_SCOPES);

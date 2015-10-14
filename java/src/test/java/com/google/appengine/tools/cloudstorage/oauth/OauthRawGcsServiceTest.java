@@ -58,12 +58,12 @@ public class OauthRawGcsServiceTest {
   private static final ImmutableSet<HTTPHeader> HEADERS = ImmutableSet.of();
   private static final String URL_PREFIX = "https://storage.googleapis.com/" + BUCKET + "/";
 
-  private OAuthURLFetchService oauthURLFetchService;
+  private URLFetchService oauthURLFetchService;
   private OauthRawGcsService service;
 
   @Before
   public void setUp() {
-    oauthURLFetchService = mock(OAuthURLFetchService.class);
+    oauthURLFetchService = mock(URLFetchService.class);
     service = new OauthRawGcsService(oauthURLFetchService, HEADERS);
   }
 

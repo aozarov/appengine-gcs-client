@@ -20,8 +20,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.appengine.api.urlfetch.HTTPHeader;
 import com.google.appengine.api.urlfetch.HTTPRequest;
-import com.google.appengine.api.urlfetch.HTTPResponse;
-import com.google.appengine.api.urlfetch.URLFetchService;
 import com.google.appengine.tools.cloudstorage.ExceptionHandler;
 import com.google.appengine.tools.cloudstorage.RetryHelper;
 import com.google.appengine.tools.cloudstorage.RetryHelperException;
@@ -39,7 +37,7 @@ import java.util.concurrent.Future;
  * An OAuthURLFetchService decorator that adds the authorization header to the http request.
  *
  */
-abstract class AbstractOAuthURLFetchService implements OAuthURLFetchService {
+abstract class AbstractURLFetchService implements URLFetchService {
 
   private final URLFetchService urlFetch;
 
@@ -49,7 +47,7 @@ abstract class AbstractOAuthURLFetchService implements OAuthURLFetchService {
   private static final RetryParams RETRY_PARAMS =
       new RetryParams.Builder().initialRetryDelayMillis(10).totalRetryPeriodMillis(10000).build();
 
-  AbstractOAuthURLFetchService(URLFetchService urlFetch) {
+  AbstractURLFetchService(URLFetchService urlFetch) {
     this.urlFetch = checkNotNull(urlFetch);
   }
 

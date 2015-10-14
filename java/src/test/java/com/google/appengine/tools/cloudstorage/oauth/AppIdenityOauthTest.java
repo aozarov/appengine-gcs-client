@@ -6,9 +6,8 @@ import static org.mockito.Mockito.RETURNS_MOCKS;
 import static org.mockito.Mockito.mock;
 
 import com.google.appengine.api.urlfetch.HTTPRequest;
-import com.google.appengine.api.urlfetch.HTTPResponse;
-import com.google.appengine.api.urlfetch.URLFetchService;
 import com.google.appengine.tools.cloudstorage.RetryHelperException;
+import com.google.appengine.tools.cloudstorage.oauth.URLFetchService.HTTPResponse;
 import com.google.apphosting.api.ApiProxy.ApiDeadlineExceededException;
 import com.google.common.collect.Lists;
 
@@ -29,7 +28,7 @@ public class AppIdenityOauthTest {
 
   List<String> oauthScopes = Lists.newArrayList("foo", "bar");
 
-  private static class FailingFetchService extends AbstractOAuthURLFetchService {
+  private static class FailingFetchService extends AbstractURLFetchService {
 
     private int numToFail;
 

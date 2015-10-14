@@ -16,7 +16,7 @@ import com.google.api.services.storage.Storage;
 import com.google.appengine.api.urlfetch.HTTPHeader;
 import com.google.appengine.api.urlfetch.HTTPMethod;
 import com.google.appengine.api.urlfetch.HTTPRequest;
-import com.google.appengine.api.urlfetch.HTTPResponse;
+import com.google.appengine.tools.cloudstorage.oauth.URLFetchService.HTTPResponse;
 import com.google.appengine.tools.cloudstorage.oauth.URLFetchUtils.HTTPRequestInfo;
 import com.google.common.collect.ImmutableList;
 

@@ -16,6 +16,9 @@
 
 package com.google.appengine.tools.cloudstorage.oauth;
 
+import com.google.api.client.util.Joiner;
+import com.google.api.client.util.Lists;
+import com.google.appengine.api.ThreadManager;
 import com.google.appengine.api.urlfetch.HTTPHeader;
 import com.google.appengine.api.urlfetch.HTTPRequest;
 import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
@@ -24,9 +27,17 @@ import com.google.appengine.repackaged.com.google.common.util.concurrent.Futures
 import com.google.appengine.tools.cloudstorage.RawGcsService;
 import com.google.appengine.tools.cloudstorage.RetryHelperException;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.ByteStreams;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 
@@ -49,7 +60,82 @@ public final class OauthRawGcsServiceFactory {
   }
 
   public static URLFetchService getURLFetchService() {
-    return new URLFetchAdapter();
+    return true || Boolean.parseBoolean(System.getenv("GAE_VM"))
+        ? new URLConnectionAdapter() : new URLFetchAdapter();
+  }
+
+  private static class URLConnectionAdapter implements URLFetchService {
+
+    private static final ExecutorService executor =
+        Executors.newSingleThreadExecutor(ThreadManager.currentRequestThreadFactory());
+
+    @Override
+    public HTTPResponse fetch(HTTPRequest req) throws IOException, RetryHelperException {
+      URL url = req.getURL();
+      HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+      connection.setRequestMethod(req.getMethod().name());
+      for (HTTPHeader header : req.getHeaders()) {
+        connection.setRequestProperty(header.getName(), header.getValue());
+      }
+      // TODO: We should apply HTTPRequest options on the connection but the HTTPRequest
+      // accessors are package scope. For now set the values based on OauthRawGcsService.makeRequest
+      connection.setInstanceFollowRedirects(false);
+      connection.setConnectTimeout(20_000);
+      connection.setReadTimeout(30_000);
+      byte[] payload = req.getPayload();
+      if (payload != null) {
+        connection.setDoOutput(true);
+        OutputStream wr = connection.getOutputStream();
+        wr.write(payload);
+        wr.flush();
+        wr.close();
+      }
+      final int responseCode = connection.getResponseCode();
+      final byte[] content = ByteStreams.toByteArray(connection.getInputStream());
+      final Map<String, List<String>> headers = connection.getHeaderFields();
+      return new HTTPResponse() {
+
+        @Override
+        public int getResponseCode() {
+          return responseCode;
+        }
+
+        @Override
+        public byte[] getContent() {
+          return content;
+        }
+
+        @Override
+        public List<HTTPHeader> getHeadersUncombined() {
+          List<HTTPHeader> response = Lists.newArrayListWithCapacity(headers.size());
+          for (Map.Entry<String, List<String>> h : headers.entrySet()) {
+            for (String v : h.getValue()) {
+              response.add(new HTTPHeader(h.getKey(), v));
+            }
+          }
+          return response;
+        }
+
+        @Override
+        public List<HTTPHeader> getHeaders() {
+          List<HTTPHeader> response = Lists.newArrayListWithCapacity(headers.size());
+          for (Map.Entry<String, List<String>> h : headers.entrySet()) {
+            response.add(new HTTPHeader(h.getKey(), Joiner.on(',').join(h.getValue())));
+          }
+          return response;
+        }
+      };
+    }
+
+    @Override
+    public Future<HTTPResponse> fetchAsync(final HTTPRequest request) {
+      return executor.submit(new Callable<HTTPResponse>() {
+
+        @Override public HTTPResponse call() throws Exception {
+          return fetch(request);
+        }
+      });
+    }
   }
 
   private static class URLFetchAdapter implements URLFetchService {

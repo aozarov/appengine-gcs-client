@@ -29,6 +29,7 @@ import com.google.appengine.tools.cloudstorage.RetryHelperException;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -37,8 +38,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -60,14 +63,18 @@ public final class OauthRawGcsServiceFactory {
   }
 
   public static URLFetchService getURLFetchService() {
-    return true || Boolean.parseBoolean(System.getenv("GAE_VM"))
+    return Boolean.parseBoolean(System.getenv("GAE_VM"))
         ? new URLConnectionAdapter() : new URLFetchAdapter();
   }
 
   private static class URLConnectionAdapter implements URLFetchService {
 
     private static final ExecutorService executor =
-        Executors.newSingleThreadExecutor(ThreadManager.currentRequestThreadFactory());
+        new ThreadPoolExecutor(1, 100,
+            0L, TimeUnit.MILLISECONDS,
+            new SynchronousQueue<Runnable>(),
+            ThreadManager.currentRequestThreadFactory(),
+            new ThreadPoolExecutor.CallerRunsPolicy());
 
     @Override
     public HTTPResponse fetch(HTTPRequest req) throws IOException, RetryHelperException {
@@ -91,7 +98,8 @@ public final class OauthRawGcsServiceFactory {
         wr.close();
       }
       final int responseCode = connection.getResponseCode();
-      final byte[] content = ByteStreams.toByteArray(connection.getInputStream());
+      final byte[] content =
+          ByteStreams.toByteArray(new BufferedInputStream(connection.getInputStream()));
       final Map<String, List<String>> headers = connection.getHeaderFields();
       return new HTTPResponse() {
 
